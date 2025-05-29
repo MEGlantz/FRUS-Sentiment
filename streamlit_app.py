@@ -9,7 +9,7 @@ from copy import deepcopy
 # ✅ Make a copy of the secrets dictionary
 
 # Load and fix credentials
-from copy import deepcopy
+
 raw_creds = deepcopy(st.secrets["gcp_service_account"])
 raw_creds["private_key"] = raw_creds["private_key"].replace("\\n", "\n")
 
