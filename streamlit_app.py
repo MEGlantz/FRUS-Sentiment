@@ -67,3 +67,8 @@ if submitted:
 
     st.success("Submitted! You can now refresh or label another item.")
     st.stop()
+
+# Show download button if annotations exist
+if os.path.exists("annotations.csv"):
+    with open("annotations.csv", "rb") as f:
+        st.download_button("📥 Download annotations", f, file_name="annotations.csv")
