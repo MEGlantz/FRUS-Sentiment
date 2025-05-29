@@ -7,6 +7,7 @@ from google.oauth2.service_account import Credentials
 # Authenticate with Google Sheets using secrets
 creds_dict = st.secrets["gcp_service_account"]
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+st.write(creds_dict["private_key"])
 credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
 gc = gspread.authorize(credentials)
 
