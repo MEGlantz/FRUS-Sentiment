@@ -57,5 +57,5 @@ if submitted:
     else:
         out_df.to_csv(out_path, index=False)
 
-    st.success("Submitted! Refreshing...")
-    st.experimental_rerun()
+    st.success("Submitted! You can now refresh or label another item.")
+    st.stop()
