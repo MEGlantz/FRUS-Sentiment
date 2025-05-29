@@ -3,11 +3,14 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
+import json
 
 
 # ✅ Make a copy of the secrets dictionary
-raw_creds = dict(st.secrets["gcp_service_account"])
+
+raw_creds = json.loads(json.dumps(st.secrets["gcp_service_account"]))
 raw_creds["private_key"] = raw_creds["private_key"].replace("\\n", "\n")
+
 
 # Now use this cleaned dictionary to authenticate
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
