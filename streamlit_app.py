@@ -29,14 +29,8 @@ st.title("FRUS Sentiment Labeling Tool")
 st.markdown("Label sentiment on a -2 to +2 scale. Your initials and optional comments are helpful.")
 
 st.subheader("Document Excerpt")
-st.markdown(
-    f"""
-    <div style="padding: 1em; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; line-height: 1.6;">
-        {row["text_chunk"]}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.text_area("Text", value=row["text_chunk"], height=200, disabled=True)
+
 # Form
 with st.form("label_form"):
     sentiment = st.radio(
@@ -63,5 +57,5 @@ if submitted:
     else:
         out_df.to_csv(out_path, index=False)
 
-    st.success("Submitted! You can now refresh or label another item.")
-    st.stop()
+    st.success("Submitted! Refreshing...")
+    st.experimental_rerun()
