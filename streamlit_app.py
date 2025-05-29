@@ -29,7 +29,14 @@ st.title("FRUS Sentiment Labeling Tool")
 st.markdown("Label sentiment on a -2 to +2 scale. Your initials and optional comments are helpful.")
 
 st.subheader("Document Excerpt")
-st.text_area("Text", value=row["text_chunk"], height=200, disabled=True)
+st.markdown(
+    f"""
+    <div style="padding: 1em; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; line-height: 1.6;">
+        {row["text_chunk"]}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # Form
 with st.form("label_form"):
@@ -37,6 +44,7 @@ with st.form("label_form"):
         "Sentiment (-2 = Very Negative, 0 = Neutral, +2 = Very Positive)",
         [-2, -1, 0, 1, 2], horizontal=True
     )
+    not_relevant = st.checkbox("Mark this chunk as NOT relevant (e.g., index, metadata)")
     initials = st.text_input("Your Initials (or leave blank)")
     comments = st.text_area("Optional Comments")
     submitted = st.form_submit_button("Submit")
@@ -46,7 +54,7 @@ if submitted:
     result = {
         "id": row["id"],
         "text_chunk": row["text_chunk"],
-        "sentiment": sentiment,
+        "sentiment": "not_relevant" if not_relevant else sentiment,
         "initials": initials,
         "comments": comments
     }
@@ -57,5 +65,5 @@ if submitted:
     else:
         out_df.to_csv(out_path, index=False)
 
-    st.success("Submitted! Refreshing...")
-    st.experimental_rerun()
+    st.success("Submitted! You can now refresh or label another item.")
+    st.stop()
