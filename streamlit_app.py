@@ -4,12 +4,16 @@ import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
 
-# Authenticate with Google Sheets using secrets
-creds_dict = st.secrets["gcp_service_account"]
+
+# ✅ Make a copy of the secrets dictionary
+raw_creds = dict(st.secrets["gcp_service_account"])
+raw_creds["private_key"] = raw_creds["private_key"].replace("\\n", "\n")
+
+# Now use this cleaned dictionary to authenticate
 scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-# ✅ Add this fix just before using creds_dict
-creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+credentials = Credentials.from_service_account_info(raw_creds, scopes=scopes)
+
+
 gc = gspread.authorize(credentials)
 
 # Open your sheet by name
