@@ -1,74 +1,59 @@
 
 import streamlit as st
 import pandas as pd
-import random
-import os
+import gspread
+from google.oauth2.service_account import Credentials
 
-# Load data
+# Authenticate with Google Sheets using secrets
+creds_dict = st.secrets["gcp_service_account"]
+scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+credentials = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+gc = gspread.authorize(credentials)
+
+# Open your sheet by name
+SPREADSHEET_NAME = "FRUS Sentiment Annotations"
+worksheet = gc.open(SPREADSHEET_NAME).sheet1
+
+# Load data chunks
 @st.cache_data
-def load_data():
+def load_chunks():
     df = pd.read_csv("frus_1961_63_volume5_chunks.csv")
     return df
 
-df = load_data()
+df = load_chunks()
 
-# Get a random row
-if "seen_ids" not in st.session_state:
-    st.session_state.seen_ids = set()
+# Track user progress
+if "chunk_index" not in st.session_state:
+    st.session_state.chunk_index = 0
 
-unseen = df[~df['id'].isin(st.session_state.seen_ids)]
-if unseen.empty:
-    st.success("You've labeled all the available chunks!")
-    st.stop()
+st.title("📜 FRUS Sentiment Labeling")
+st.subheader("Help label U.S. diplomatic text with expert-informed sentiment")
 
-row = unseen.sample(1).iloc[0]
-st.session_state.seen_ids.add(row['id'])
+current_chunk = df.iloc[st.session_state.chunk_index]
 
-# UI
-st.title("FRUS Sentiment Labeling Tool")
-st.markdown("Label sentiment on a -2 to +2 scale. Your initials and optional comments are helpful.")
+st.markdown("### Document Excerpt")
+st.code(current_chunk["text_chunk"], language="markdown")
 
-st.subheader("Document Excerpt")
-st.markdown(
-    f"""
-    <div style="padding: 1em; background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; line-height: 1.6;">
-        {row["text_chunk"]}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+sentiment = st.radio("Sentiment (−2 = very negative, +2 = very positive)", [-2, -1, 0, 1, 2], horizontal=True)
+not_relevant = st.checkbox("Not relevant (e.g., index or non-substantive text)")
+initials = st.text_input("Your initials")
+comments = st.text_area("Optional comments")
 
-# Form
-with st.form("label_form"):
-    sentiment = st.radio(
-        "Sentiment (-2 = Very Negative, 0 = Neutral, +2 = Very Positive)",
-        [-2, -1, 0, 1, 2], horizontal=True
-    )
-    not_relevant = st.checkbox("Mark this chunk as NOT relevant (e.g., index, metadata)")
-    initials = st.text_input("Your Initials (or leave blank)")
-    comments = st.text_area("Optional Comments")
-    submitted = st.form_submit_button("Submit")
+if st.button("Submit"):
+    data_to_save = [
+        str(current_chunk["id"]),
+        current_chunk["text_chunk"],
+        "Not Relevant" if not_relevant else sentiment,
+        initials,
+        comments
+    ]
+    worksheet.append_row(data_to_save)
+    st.success("Annotation saved!")
 
-# Save response
-if submitted:
-    result = {
-        "id": row["id"],
-        "text_chunk": row["text_chunk"],
-        "sentiment": "not_relevant" if not_relevant else sentiment,
-        "initials": initials,
-        "comments": comments
-    }
-    out_df = pd.DataFrame([result])
-    out_path = "annotations.csv"
-    if os.path.exists(out_path):
-        out_df.to_csv(out_path, mode="a", index=False, header=False)
+    if st.session_state.chunk_index + 1 < len(df):
+        st.session_state.chunk_index += 1
+        st.rerun()
     else:
-        out_df.to_csv(out_path, index=False)
+        st.balloons()
+        st.markdown("🎉 All chunks labeled! Thank you!")
 
-    st.success("Submitted! You can now refresh or label another item.")
-    st.stop()
-
-# Show download button if annotations exist
-if os.path.exists("annotations.csv"):
-    with open("annotations.csv", "rb") as f:
-        st.download_button("📥 Download annotations", f, file_name="annotations.csv")
