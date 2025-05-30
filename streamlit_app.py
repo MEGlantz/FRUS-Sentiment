@@ -43,7 +43,15 @@ st.subheader("Help label U.S. diplomatic text with expert-informed sentiment")
 current_chunk = df.iloc[st.session_state.chunk_index]
 
 st.markdown("### Document Excerpt")
-st.code(current_chunk["text_chunk"], language="markdown")
+st.markdown(
+    f"""
+    <div style="border: 1px solid #ccc; border-radius: 5px; padding: 1rem; background-color: #f9f9f9; 
+                max-height: 200px; overflow-y: auto; white-space: pre-wrap;">
+        {current_chunk["text_chunk"]}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 not_relevant = st.checkbox("Not relevant (e.g., index or non-substantive text)")
 
