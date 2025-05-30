@@ -5,6 +5,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import json
 from copy import deepcopy
+import random
 
 # ✅ Make a copy of the secrets dictionary
 
@@ -32,8 +33,9 @@ def load_chunks():
 df = load_chunks()
 
 # Track user progress
+
 if "chunk_index" not in st.session_state:
-    st.session_state.chunk_index = 0
+    st.session_state.chunk_index = random.randint(0, len(df) - 1)
 
 st.title("📜 FRUS Sentiment Labeling")
 st.subheader("Help label U.S. diplomatic text with expert-informed sentiment")
@@ -43,8 +45,18 @@ current_chunk = df.iloc[st.session_state.chunk_index]
 st.markdown("### Document Excerpt")
 st.code(current_chunk["text_chunk"], language="markdown")
 
-sentiment = st.radio("Sentiment (−2 = very negative, +2 = very positive)", [-2, -1, 0, 1, 2], horizontal=True)
 not_relevant = st.checkbox("Not relevant (e.g., index or non-substantive text)")
+
+sentiment = None
+if not not_relevant:
+    sentiment = st.radio(
+        "Sentiment (−2 = very negative, +2 = very positive)",
+        [-2, -1, 0, 1, 2],
+        horizontal=True
+    )
+else:
+    st.info("Sentiment selection disabled because 'Not relevant' is checked.")
+    
 initials = st.text_input("Your initials")
 comments = st.text_area("Optional comments")
 
@@ -60,7 +72,7 @@ if st.button("Submit"):
     st.success("Annotation saved!")
 
     if st.session_state.chunk_index + 1 < len(df):
-        st.session_state.chunk_index += 1
+        st.session_state.chunk_index = random.randint(0, len(df) - 1)
         st.rerun()
     else:
         st.balloons()
